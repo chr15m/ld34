@@ -19,7 +19,7 @@
 (defonce physics-engine (atom nil))
 (defonce viewport-size (atom {}))
 
-(def blurb "a tiny cljs game engine experiment.")
+(def blurb "hello.")
 (def physics-scale 1000.0)
 
 (print blurb)
@@ -91,10 +91,6 @@
       (assoc-in [:pos 0] (* (Math.cos (/ now 500)) 0.05))
       (assoc-in [:angle] (Math.cos (/ now 2000)))))
 
-(defn behaviour-expand [old-state elapsed now]
-  (-> old-state
-      (assoc-in [:svg 1 :r] (+ 0.04 (* (Math.cos (/ now 200)) 0.001)))))
-
 (defn engine-updated [engine]
   ; (print "renderer.world")
   ; (js/console.log engine.world.bodies)  
@@ -153,46 +149,10 @@
 (make-entity {:symbol "❤" :color 1 :pos [0 0] :angle 0 :class "boss" :size [0.2 0.2]})
 (make-entity {:symbol "☢" :color 0 :pos [-0.2 0.3] :angle 0 :size [0.2 0.2] :behaviour behaviour-rock :style {:border "1px dashed silver" :border-radius 52}})
 (make-entity {:symbol "⬠" :color 0 :pos [-0.35 -0.3] :angle 0 :size [0.2 0.2]})
-(make-entity {:symbol "▼" :color 0 :pos [-1.0 1.0] :angle 0 :size [0.2 0.2]})
+(make-entity {:symbol "▼" :color 0 :pos [-0.8 0.8] :angle 0 :size [0.2 0.2]})
 (make-entity {:symbol "⚔" :color 0 :pos [1.0 0.9] :angle 0 :size [0.2 0.2]})
 (make-entity {:symbol "☠" :color 1 :pos [1.0 0.2] :angle 0 :size [0.2 0.2]})
 (make-entity {:symbol "⚡" :color 0 :pos [0.5 -0.2] :angle 0 :size [0.2 0.2]})
-
-(make-entity {:pos [-1.0 0]
-              :size [0.3 0.3]
-              :angle 0
-              :behaviour behaviour-expand
-              :entity-args {:on-click play-blip}
-              :svg [:circle {:cx 0.15
-                             :cy 0.15
-                             :r 0.04
-                             :style {:fill "#0f0"
-                                     :filter "url(#glowfilter)"}}]})
-
-;; -------------------------
-;; Components
-
-(defn component-svg [[w h] id style svg-content]
-  (let [rw (* w (:extent @viewport-size))
-        rh (* h (:extent @viewport-size))]
-    [:svg {:view-box (str "0 0 " w " " h)
-           :id id
-           :key id
-           :class "sprite"
-           :style style}
-     [:defs
-      [:filter {:id "glowfilter"
-                :width rw
-                :height rh
-                :x (* rw -0.5)
-                :y (* rh -0.5)
-                ; http://carmenla.me/blog/posts/2015-06-22-reagent-live-markdown-editor.html
-                :dangerouslySetInnerHTML
-                {:__html "<feGaussianBlur in='SourceGraphic' stdDeviation='0.015'/>
-                         <feMerge>
-                         <feMergeNode/><feMergeNode in='SourceGraphic'/>
-                         </feMerge>"}}]]
-     svg-content]))
 
 ;; -------------------------
 ;; Views
@@ -202,11 +162,7 @@
     [:div {:id "game-board"}
       ; DOM "scene grapher"
       (doall (map
-               (fn [[id e]] (cond
-                              ; render a "symbol"
-                              (:symbol e) [:div (merge {:class (str "sprite c" (:color e) " " (:class e)) :key id :id id :style (merge (compute-position-style e) (:style e))} (:entity-args e)) (:symbol e)]
-                              ; render an SVG
-                              (:svg e) [:div (merge {:key id :id id} (:entity-args e)) [component-svg (:size e) id (compute-position-style e) (:svg e)]]))
+               (fn [[id e]] [:div (merge {:class (str "sprite c" (:color e) " " (:class e)) :key id :id id :style (merge (compute-position-style e) (:style e))} (:entity-args e)) (:symbol e)])
                (:entities @game-state)))]
     ; info blurb
     [:div {:class "info c2"} blurb [:p "[ " [:a {:href "http://github.com/chr15m/tiny-cljs-game-engine"} "source code"] " ]"]]
