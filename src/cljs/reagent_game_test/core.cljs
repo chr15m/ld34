@@ -157,7 +157,7 @@
 (make-entity {:symbol "➤" :color 1 :pos [0.3 0.2] :angle 0 :size [0.2 0.2]})
 (make-entity {:symbol "⚡" :color 0 :pos [0.5 -0.2] :angle 0 :size [0.2 0.2]})
 
-(make-entity {:pos [-1.0 -1.0]
+(make-entity {:pos [-1.0 0]
               :size [0.3 0.3]
               :angle 0
               :behaviour behaviour-expand
@@ -197,11 +197,11 @@
 (js/window.addEventListener "resize" #(swap! viewport-size re-calculate-viewport-size))
 
 (defonce engine
-  (let [engine (physics/make-physics-engine engine-updated)]
+  (let [engine (physics/make-physics-engine #(engine-updated %))]
     (print "creating physics engine")
-    (let [boxA (physics/rectangle 400 200 80 80)
-          boxB (physics/rectangle 450 50 80 80)
-          ground (physics/rectangle 400 610 810 60 #js {:isStatic true})]
+    (let [boxA (make-box 0.3 0.2 0.2 0.2)
+          boxB (make-box 0.45 0.5 0.2 0.2)
+          ground (make-box 0.4 0.9 1.0 0.1 {:isStatic true})]
       (physics/add engine.world #js [boxA boxB ground]))
     (physics/run engine)))
 
