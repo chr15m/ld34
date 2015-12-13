@@ -19,7 +19,7 @@
 (defonce physics-engine (atom nil))
 (defonce viewport-size (atom {}))
 
-(def blurb "hello.")
+(def blurb "ld34.")
 (def physics-scale 1000.0)
 
 (print blurb)
@@ -171,7 +171,7 @@
                (fn [[id e]] [:div (merge {:class (str "sprite c" (:color e) " " (:class e)) :key id :id id :style (merge (compute-position-style e) (:style e))} (:entity-args e)) (:symbol e)])
                (:entities @game-state)))]
     ; info blurb
-    [:div {:class "info c2"} blurb [:p "[ " [:a {:href "http://github.com/chr15m/tiny-cljs-game-engine"} "source code"] " ]"]]
+    [:div {:class "info c2"} blurb " [ " [:a {:href "http://github.com/chr15m/ld34"} "source code"] " ]"]
     ; tv scan-line effect
     [:div {:id "overlay"}]])
 
