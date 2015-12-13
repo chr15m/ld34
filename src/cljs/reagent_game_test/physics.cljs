@@ -10,12 +10,11 @@
   (def renderer {:create (fn [options]
                            (print "renderer.create")
                            (clj->js {:controller renderer}))
-                 :world (fn [engine] (update-callback engine))})
+                 :world update-callback})
   renderer)
 
 (defn make-physics-engine [update-callback]
   (let [engine (js/Matter.Engine.create (clj->js {:render {:controller (make-renderer update-callback)}}))]
-    (js/console.log "bodies" engine.world.bodies)
     engine))
 
 (defn run [engine]
