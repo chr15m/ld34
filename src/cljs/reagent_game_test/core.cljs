@@ -196,6 +196,9 @@
 ; update the current viewport size if it changes
 (js/window.addEventListener "resize" #(swap! viewport-size re-calculate-viewport-size))
 
+; ignore all mouse downs
+(js/window.addEventListener "mousedown" (fn [ev] (.preventDefault ev)))
+
 (defonce engine
   (let [engine (physics/make-physics-engine #(engine-updated %))]
     (print "creating physics engine")
