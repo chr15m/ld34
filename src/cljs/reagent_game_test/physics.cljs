@@ -13,8 +13,9 @@
                  :world update-callback})
   renderer)
 
-(defn make-physics-engine [update-callback]
+(defn make-physics-engine [update-callback collision-callback]
   (let [engine (js/Matter.Engine.create (clj->js {:render {:controller (make-renderer update-callback)}}))]
+    (js/Matter.Events.on engine "collisionStart" collision-callback)
     engine))
 
 (defn run [engine]

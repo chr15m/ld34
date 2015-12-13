@@ -111,6 +111,12 @@
                             :pos [(/ (aget b.position "x") physics-scale) (/ (aget b.position "y") physics-scale)]
                             :angle (/ b.angle (* Math.PI 2))} b.entity))))))
 
+(defn engine-collision [ev]
+  (doall (for [p ev.pairs]
+           (do
+           (js/console.log "collision" p.bodyA p.bodyB)
+           (sfx/play :bump-1)))))
+
 (defn make-box [p1 p2 s1 s2 & [options entity]]
   (let [extent (:extent @viewport-size)
         original-pos [p1 p2 s1 s2]
@@ -190,7 +196,7 @@
   (js/window.addEventListener "mousemove" (fn [ev] (if @drag (drag-update ev)) (.preventDefault ev)))))
 
 (defonce engine
-  (let [engine (physics/make-physics-engine #(engine-updated %))]
+  (let [engine (physics/make-physics-engine #(engine-updated %) #(engine-collision %))]
     (print "creating physics engine")
     (let [boxA (make-box -0.2 0.2 0.2 0.2 {} {:symbol "❤" :style {:font-size "0.5em"} :color 1 :entity-args {:on-click play-blip :on-mouse-down drag-start}})
           boxB (make-box 0.3 0.5 0.2 0.2)
