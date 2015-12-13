@@ -123,15 +123,21 @@
   ; (js/console.log engine.world.bodies)  
   (doall (for [b engine.world.bodies]
            ; (js/console.log b)
-           (let [game-id (str "physics-" b.id)]
+           (let [game-id (str "physics-" b.id)
+                 extent (:extent @viewport-size)
+                 half-extent (/ extent 2)]
              ;(print game-id)
              ;(print b.position)
              (swap! game-state assoc-in
                     [:entities game-id]
                     {:id game-id
-                     :symbol "⚡"
-                     :color 0
-                     :pos [(/ (- (aget b.position "x") 500) 1000.0) (/ (- (aget b.position "y") 500) 1000.0)]
+                     :symbol "❤"
+                     :color 1
+                     :size [(aget b.renderInfo.originalSize 0) (aget b.renderInfo.originalSize 1)]
+                     :class "outline"
+                     ; :pos [(/ (- (aget b.position "x") half-extent) extent) (/ (- (aget b.position "y") half-extent) extent)]
+                     ; :pos [(aget b.position "x") (aget b.position "y")]
+                     :pos [(/ (aget b.position "x") 1000.0) (/ (aget b.position "y") 1000.0)]
                      :angle (/ b.angle (* Math.PI 2))})))))
 
 (defn make-box [p1 p2 s1 s2 & [options entity]]
