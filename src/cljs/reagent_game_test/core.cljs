@@ -15,6 +15,7 @@
 
 ; all of the entities that appear in our game
 (def game-state (atom {:entities {}}))
+(def drag (atom nil))
 (defonce viewport-size (atom {}))
 
 (def blurb "a tiny cljs game engine experiment.")
@@ -33,21 +34,33 @@
         h (.-height viewport-size)]
     {:w w
      :h h
-     :extent (/ (min w h) 2)
-     :ratio (/ (min w h) 1024)}))
+     :extent (/ (min w h) 2.0)
+     :ratio (/ (min w h) 1024.0)}))
+
+(defn translate-screen-coordinates [[x y]]
+  (let [{:keys [w h extent ratio]} @viewport-size]
+    [(/ (- x (/ w 2)) extent)
+     (/ (- y (/ h 2)) extent)]))
 
 (defn get-time-now [] (.getTime (js/Date.)))
 
-; get a list of collision-type that are entity is currently colliding
-;(defn get-collision-between [entity collision-type]
-  ;(when (not (= (entity :visibility) :invisible))
-    ;(doall (filter (fn [[id other]]
-                     ;(if (js/document.getElementById id)
-                       ;(collision-test-by-id (entity :id) id)))
-                   ;(get-type collision-type)))))
+(defn drag-start [ev]
+  (reset! drag (translate-screen-coordinates [ev.target.offsetLeft ev.target.offsetTop])))
+
+(defn drag-update [ev]
+  (let [[x y] (translate-screen-coordinates [ev.clientX ev.clientY])
+        [dx dy] [(- (@drag 0) x) (- (@drag 1) y)]
+        pos [(+ (/ dx 2.0) x) (+ (/ dy 2.0) y)]
+        angle (/ (js/Math.atan2 dy dx) (* Math.PI 2))
+        distance (js/Math.sqrt (+ (js/Math.pow dx 2) (js/Math.pow dy 2)))]
+    (swap! game-state assoc-in [:entities :dragger] {:id :dragger :pos pos :symbol "" :class "solid" :color 2 :size [distance 0.01] :angle angle :style {:opacity 0.75 :z-index 1000}})))
+
+(defn drag-end [ev]
+  (swap! game-state update-in [:entities] dissoc :dragger)
+  (reset! drag nil))
 
 ; turn a position into a CSS style declaration
-(defn compute-position-style [{[x y] :pos angle :angle [ew eh] :size}]
+(defn compute-position-style [{[x y] :pos angle :angle [ew eh] :size :or {angle 0}}]
   (let [{:keys [w h extent ratio]} @viewport-size
         position-style {:left (+ (* x extent) (/ w 2))
                         :top (+ (* y extent) (/ h 2))
@@ -128,22 +141,23 @@
 ; define our initial game entities
 (make-entity {:symbol "◎" :color 0 :pos [-0.3 -0.2] :angle 0 :behaviour behaviour-loop :size [0.2 0.2] :entity-args {:on-click play-blip}})
 (make-entity {:symbol "❤" :color 1 :pos [0 0] :angle 0 :class "boss" :size [0.2 0.2]})
-;(make-entity {:symbol "◍" :color 0 :pos [-20 300] :angle 0 :behaviour behaviour-rock})
+(make-entity {:symbol "◍" :color 0 :pos [-0.2 0.3] :angle 0 :size [0.2 0.2] :behaviour behaviour-rock :style {:border "1px dashed silver" :border-radius 52}})
 (make-entity {:symbol "⬠" :color 0 :pos [-0.35 -0.3] :angle 0 :size [0.2 0.2]})
 (make-entity {:symbol "▼" :color 0 :pos [-1.0 1.0] :angle 0 :size [0.2 0.2]})
-(make-entity {:symbol "➤" :color 1 :pos [0.3 0.2] :angle 0 :size [0.2 0.2]})
+(make-entity {:symbol "➤" :color 1 :pos [1.0 0.2] :angle 0 :size [0.2 0.2]})
 (make-entity {:symbol "⚡" :color 0 :pos [0.5 -0.2] :angle 0 :size [0.2 0.2]})
 
 (make-entity {:pos [-1.0 0]
               :size [0.3 0.3]
               :angle 0
               :behaviour behaviour-expand
-              :on-click play-blip
+              :entity-args {:on-click play-blip}
               :svg [:circle {:cx 0.15
                              :cy 0.15
                              :r 0.04
                              :style {:fill "#0f0"
                                      :filter "url(#glowfilter)"}}]})
+
 ;; -------------------------
 ;; Components
 
@@ -181,7 +195,7 @@
                               ; render a "symbol"
                               (:symbol e) [:div (merge {:class (str "sprite c" (:color e) " " (:class e)) :key id :style (merge (compute-position-style e) (:style e))} (:entity-args e)) (:symbol e)]
                               ; render an SVG
-                              (:svg e) [:div (merge {:key id :on-click (:on-click e)} (:entity-args e)) [component-svg (:size e) id (compute-position-style e) (:svg e)]]))
+                              (:svg e) [:div (merge {:key id} (:entity-args e)) [component-svg (:size e) id (compute-position-style e) (:svg e)]]))
                (:entities @game-state)))]
     ; info blurb
     [:div {:class "info c2"} blurb [:p "[ " [:a {:href "http://github.com/chr15m/tiny-cljs-game-engine"} "source code"] " ]"]]
@@ -194,16 +208,24 @@
 ; get the real viewport size for the first time
 (swap! viewport-size re-calculate-viewport-size)
 
-; update the current viewport size if it changes
-(js/window.addEventListener "resize" #(swap! viewport-size re-calculate-viewport-size))
 
-; ignore all mouse downs
-(js/window.addEventListener "mousedown" (fn [ev] (.preventDefault ev)))
+(defonce listeners (do
+  ; update the current viewport size if it changes
+  (js/window.addEventListener "resize" #(swap! viewport-size re-calculate-viewport-size))
+
+  ; ignore all mouse downs
+  (js/window.addEventListener "mousedown" (fn [ev] (.preventDefault ev)))
+
+  ; when the mouse is lifted, null out the drag
+  (js/window.addEventListener "mouseup" (fn [ev] (drag-end ev) (.preventDefault ev)))
+
+  ; when the mouse is moved, update the drag
+  (js/window.addEventListener "mousemove" (fn [ev] (if @drag (drag-update ev)) (.preventDefault ev)))))
 
 (defonce engine
   (let [engine (physics/make-physics-engine #(engine-updated %))]
     (print "creating physics engine")
-    (let [boxA (make-box -0.2 0.2 0.2 0.2 {} {:symbol "❤" :color 1})
+    (let [boxA (make-box -0.2 0.2 0.2 0.2 {} {:symbol "❤" :style {:font-size "0.5em"} :color 1 :entity-args {:on-click play-blip :on-mouse-down drag-start}})
           boxB (make-box 0.3 0.5 0.2 0.2)
           ground (make-box 0 0.9 1.0 0.1 {:isStatic true})]
       (physics/add engine.world #js [boxA boxB ground]))
