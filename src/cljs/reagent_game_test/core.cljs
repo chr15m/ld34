@@ -130,26 +130,25 @@
              ;(print b.position)
              (swap! game-state assoc-in
                     [:entities game-id]
-                    {:id game-id
-                     :symbol "❤"
-                     :color 1
-                     :size [(aget b.renderInfo.originalSize 0) (aget b.renderInfo.originalSize 1)]
+                    (merge {:id game-id
+                     :symbol ""
+                     :color 0
                      :class "outline"
-                     ; :pos [(/ (- (aget b.position "x") half-extent) extent) (/ (- (aget b.position "y") half-extent) extent)]
-                     ; :pos [(aget b.position "x") (aget b.position "y")]
+                     :size [(aget b.renderInfo.originalSize 0) (aget b.renderInfo.originalSize 1)]
                      :pos [(/ (aget b.position "x") 1000.0) (/ (aget b.position "y") 1000.0)]
-                     :angle (/ b.angle (* Math.PI 2))})))))
+                     :angle (/ b.angle (* Math.PI 2))} b.entity))))))
 
 (defn make-box [p1 p2 s1 s2 & [options entity]]
   (let [extent (:extent @viewport-size)
         original-pos [p1 p2 s1 s2]
         pos (vec (map #(* % 1000) original-pos))
         ; pos original-pos
-        new-options (clj->js (merge options {:renderInfo {:originalSize [s1 s2]} :entity entity}))]
+        new-options (clj->js (merge options {:renderInfo {:originalSize [s1 s2]}}))]
+    (set! (.-entity new-options) entity)
     (apply physics/rectangle (conj pos new-options))))
 
 ; define our initial game entities
-(make-entity {:symbol "◎" :color 0 :pos [-0.3 -0.2] :angle 0 :behaviour behaviour-loop :size [0.2 0.2] :on-click play-blip})
+(make-entity {:symbol "◎" :color 0 :pos [-0.3 -0.2] :angle 0 :behaviour behaviour-loop :size [0.2 0.2] :entity-args {:on-click play-blip}})
 (make-entity {:symbol "❤" :color 1 :pos [0 0] :angle 0 :class "boss" :size [0.2 0.2]})
 ;(make-entity {:symbol "◍" :color 0 :pos [-20 300] :angle 0 :behaviour behaviour-rock})
 (make-entity {:symbol "⬠" :color 0 :pos [-0.35 -0.3] :angle 0 :size [0.2 0.2]})
@@ -178,9 +177,9 @@
       (doall (map
                (fn [[id e]] (cond
                               ; render a "symbol"
-                              (:symbol e) [:div {:class (str "sprite c" (:color e) " " (:class e)) :key id :style (merge (compute-position-style e) (:style e)) :on-click (:on-click e)} (:symbol e)]
+                              (:symbol e) [:div (merge {:class (str "sprite c" (:color e) " " (:class e)) :key id :style (merge (compute-position-style e) (:style e))} (:entity-args e)) (:symbol e)]
                               ; render an SVG
-                              (:svg e) [:div {:key id :on-click (:on-click e)} [component-svg (:size e) id (compute-position-style e) (:svg e)]]))
+                              (:svg e) [:div (merge {:key id :on-click (:on-click e)} (:entity-args e)) [component-svg (:size e) id (compute-position-style e) (:svg e)]]))
                (:entities @game-state)))]
     ; info blurb
     [:div {:class "info c2"} blurb [:p "[ " [:a {:href "http://github.com/chr15m/tiny-cljs-game-engine"} "source code"] " ]"]]
@@ -202,7 +201,7 @@
 (defonce engine
   (let [engine (physics/make-physics-engine #(engine-updated %))]
     (print "creating physics engine")
-    (let [boxA (make-box 0.3 0.2 0.2 0.2)
+    (let [boxA (make-box 0.3 0.2 0.2 0.2 {} {:symbol "⚡"})
           boxB (make-box 0.45 0.5 0.2 0.2)
           ground (make-box 0.4 0.9 1.0 0.1 {:isStatic true})]
       (physics/add engine.world #js [boxA boxB ground]))
