@@ -6,7 +6,8 @@
               [goog.dom :as dom]
               [goog.history.EventType :as EventType]
               [cljs-uuid-utils.core :as uuid]
-              [cljs.core.async :refer [chan <! timeout]])
+              [cljs.core.async :refer [chan <! timeout]]
+              [reagent-game-test.physics :as physics])
     (:require-macros [cljs.core.async.macros :refer [go go-loop]])
     (:import goog.History))
 
@@ -36,6 +37,14 @@
      :ratio (/ (min w h) 1024)}))
 
 (defn get-time-now [] (.getTime (js/Date.)))
+
+; get a list of collision-type that are entity is currently colliding
+;(defn get-collision-between [entity collision-type]
+  ;(when (not (= (entity :visibility) :invisible))
+    ;(doall (filter (fn [[id other]]
+                     ;(if (js/document.getElementById id)
+                       ;(collision-test-by-id (entity :id) id)))
+                   ;(get-type collision-type)))))
 
 ; turn a position into a CSS style declaration
 (defn compute-position-style [{[x y] :pos angle :angle [ew eh] :size}]
@@ -109,9 +118,25 @@
                          </feMerge>"}}]]
      svg-content]))
 
+(defn engine-updated [engine]
+  ; (print "renderer.world")
+  ; (js/console.log engine.world.bodies)  
+  (doall (for [b engine.world.bodies]
+           ; (js/console.log b)
+           (let [game-id (str "physics-" b.id)]
+             ;(print game-id)
+             ;(print b.position)
+             (swap! game-state assoc-in
+                    [:entities game-id]
+                    {:id game-id
+                     :symbol "⚡"
+                     :color 0
+                     :pos [(/ (- (aget b.position "x") 500) 1000.0) (/ (- (aget b.position "y") 500) 1000.0)]
+                     :angle (/ b.angle (* Math.PI 2))})))))
+
 ; define our initial game entities
 (make-entity {:symbol "◎" :color 0 :pos [-300 -200] :angle 0 :behaviour behaviour-loop :on-click play-blip})
-(make-entity {:symbol "❤" :color 1 :pos [0 0] :angle 0})
+(make-entity {:symbol "❤" :color 1 :pos [0 0] :angle 0 :class "boss" :style {:border "1px solid red"}})
 ;(make-entity {:symbol "◍" :color 0 :pos [-20 300] :angle 0 :behaviour behaviour-rock})
 (make-entity {:symbol "⬠" :color 0 :pos [-0.350 -0.50] :angle 0})
 (make-entity {:symbol "▼" :color 0 :pos [-1.0 1.0] :angle 0})
@@ -139,7 +164,7 @@
       (doall (map
                (fn [[id e]] (cond
                               ; render a "symbol"
-                              (:symbol e) [:div {:class (str "sprite c" (:color e)) :key id :style (compute-position-style e) :on-click (:on-click e)} (:symbol e)]
+                              (:symbol e) [:div {:class (str "sprite c" (:color e) " " (:class e)) :key id :style (merge (compute-position-style e) (:style e)) :on-click (:on-click e)} (:symbol e)]
                               ; render an SVG
                               (:svg e) [:div {:key id :on-click (:on-click e)} [component-svg (:size e) id (compute-position-style e) (:svg e)]]))
                (:entities @game-state)))]
@@ -156,6 +181,15 @@
 
 ; update the current viewport size if it changes
 (js/window.addEventListener "resize" #(swap! viewport-size re-calculate-viewport-size))
+
+(defonce engine
+  (let [engine (physics/make-physics-engine engine-updated)]
+    (print "creating physics engine")
+    (let [boxA (physics/rectangle 400 200 80 80)
+          boxB (physics/rectangle 450 50 80 80)
+          ground (physics/rectangle 400 610 810 60 #js {:isStatic true})]
+      (physics/add engine.world #js [boxA boxB ground]))
+    (physics/run engine)))
 
 (defn mount-root []
   (reagent/render [home-page] (.getElementById js/document "app")))

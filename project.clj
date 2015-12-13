@@ -48,7 +48,8 @@
                                         :asset-path   "js/out"
                                         :optimizations :none
                                         :foreign-libs [{:file "https://raw.githubusercontent.com/chr15m/jsfxr/master/sfxr.js" :provides ["jsfxr"]}
-                                                       {:file "https://raw.githubusercontent.com/chr15m/jsfxr/master/riffwave.js" :provides ["RIFFWAVE"]}]
+                                                       {:file "https://raw.githubusercontent.com/chr15m/jsfxr/master/riffwave.js" :provides ["RIFFWAVE"]}
+                                                       {:file "https://raw.githubusercontent.com/liabru/matter-js/master/build/matter.js" :provides ["Matter"]}]
                                         :pretty-print  true}}
                        :min {:source-paths ["env/prod/cljs"]
                              :compiler {:output-to "build/js/app.js"
@@ -56,7 +57,8 @@
                                         :optimizations :advanced
                                         :externs ["externs.js"]
                                         :foreign-libs [{:file "https://raw.githubusercontent.com/chr15m/jsfxr/master/sfxr.js" :provides ["jsfxr"]}
-                                                       {:file "https://raw.githubusercontent.com/chr15m/jsfxr/master/riffwave.js" :provides ["RIFFWAVE"]}]
+                                                       {:file "https://raw.githubusercontent.com/chr15m/jsfxr/master/riffwave.js" :provides ["RIFFWAVE"]}
+                                                       {:file "https://raw.githubusercontent.com/liabru/matter-js/master/build/matter.js" :provides ["Matter"]}]
                                         :pretty-print false}}}}
 
   :profiles {:dev {:repl-options {:init-ns reagent-game-test.repl
@@ -88,7 +90,8 @@
                                                          :source-map true
                                                          :externs ["externs.js"]
                                                          :foreign-libs [{:file "https://raw.githubusercontent.com/chr15m/jsfxr/master/sfxr.js" :provides ["jsfxr"]}
-                                                                        {:file "https://raw.githubusercontent.com/chr15m/jsfxr/master/riffwave.js" :provides ["RIFFWAVE"]}]}}}}}
+                                                                        {:file "https://raw.githubusercontent.com/chr15m/jsfxr/master/riffwave.js" :provides ["RIFFWAVE"]}
+                                                                        {:file "https://raw.githubusercontent.com/liabru/matter-js/master/build/matter.js" :provides ["Matter"]}]}}}}}
 
              :uberjar {:hooks [leiningen.cljsbuild minify-assets.plugin/hooks]
                        :env {:production true}
