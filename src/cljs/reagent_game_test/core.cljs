@@ -115,15 +115,12 @@
 (defn engine-collision [ev]
   (doseq [p ev.pairs]
     (do
-      (js/console.log "collision" p.bodyA p.bodyB)
       (doseq [b [p.bodyA p.bodyB]]
-        (do
-          (js/console.log "hi" b (.-label b) (.-id b))
-            (when
-              (= (.-label b) "Player")
-              (set! (.-entity b) (-> (.-entity b)
-                                     (update-in [:heart-size] inc)
-                                     (assoc-in [:style :font-size] (str (.toFixed (/ (get-in (.-entity b) [:heart-size]) 10) 2) "em")))))))
+        (when
+          (= (.-label b) "Player")
+          (set! (.-entity b) (-> (.-entity b)
+                                 (update-in [:heart-size] inc)
+                                 (assoc-in [:style :font-size] (str (.toFixed (/ (get-in (.-entity b) [:heart-size]) 10) 2) "em"))))))
       (let [sfx-name (str "bump-" (+ (js/Math.round (* (js/Math.random) 2)) 1))]
         (sfx/play (keyword sfx-name))))))
 
@@ -162,7 +159,7 @@
 
 ; define our initial game entities
 (make-entity {:symbol "◎" :color 0 :pos [-0.3 -0.2] :angle 0 :behaviour behaviour-loop :size [0.2 0.2] :entity-args {:on-click play-blip}})
-(make-entity {:symbol "❤" :color 1 :pos [0 0] :angle 0 :class "boss" :size [0.2 0.2]})
+(make-entity {:symbol "❤" :color 2 :pos [0 0] :angle 0 :class "boss" :size [0.2 0.2]})
 (make-entity {:symbol "☢" :color 0 :pos [-0.2 0.3] :angle 0 :size [0.2 0.2] :behaviour behaviour-rock :style {:border "1px dashed silver" :border-radius 52}})
 (make-entity {:symbol "⬠" :color 0 :pos [-0.35 -0.3] :angle 0 :size [0.2 0.2]})
 (make-entity {:symbol "▼" :color 0 :pos [-0.8 0.8] :angle 0 :size [0.2 0.2]})
