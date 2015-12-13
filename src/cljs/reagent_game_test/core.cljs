@@ -195,7 +195,7 @@
     (let [boxA (make-box -0.2 0.2 0.2 0.2 {} {:symbol "❤" :style {:font-size "0.5em"} :color 1 :entity-args {:on-click play-blip :on-mouse-down drag-start}})
           boxB (make-box 0.3 0.5 0.2 0.2)
           ground (make-box 0 0.9 1.0 0.1 {:isStatic true})]
-      (physics/add engine.world #js [boxA boxB ground]))
+      (physics/add engine.world (clj->js [boxA boxB ground])))
     (reset! physics-engine engine)
     (physics/run engine)))
 

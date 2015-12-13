@@ -25,4 +25,4 @@
 (defn apply-impulse [engine id dx dy]
   (doall (for [b engine.world.bodies]
     (if (= b.id (js/parseInt (.substr id 8)))
-      (js/Matter.Body.applyForce b #js {:x 0 :y 0} #js {:x dx :y dy})))))
+      (js/Matter.Body.applyForce b (clj->js {:x 0 :y 0}) (clj->js {:x dx :y dy}))))))
