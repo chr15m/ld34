@@ -53,7 +53,7 @@
                         :top (+ (* y extent) (/ h 2))
                         :transform (str "translate(-50%, -50%) rotate(" angle "turn) scale(" ratio ", " ratio ")")}]
     (if ew
-      (assoc position-style :width (* ew extent) :height (* eh extent))
+      (assoc position-style :width (* ew (/ extent ratio)) :height (* eh (/ extent ratio)))
       position-style)))
 
 (defn behaviour-static [old-state elapsed now]
