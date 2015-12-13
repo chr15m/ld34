@@ -53,6 +53,10 @@ a:hover {
 .sprite {
   position: absolute;
   font-size: 4em;
+  /* border: 1px dashed silver; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .c0 {
@@ -68,6 +72,48 @@ a:hover {
 .c2 {
   color: #f0f;
   text-shadow: -1px 1px 10px rgba(255, 0, 255, 0.75), 1px -1px 10px rgba(255, 0, 255, 0.75);
+}
+
+.solid {
+  border-radius: 3px;
+  background: white;
+  box-shadow: -1px 1px 10px rgba(255, 255, 255, 0.75), 1px -1px 10px rgba(255, 255, 255, 0.75);
+}
+
+.outline {
+  border-radius: 3px;
+  border: 2px solid white;
+  box-shadow: -1px 1px 10px rgba(255, 255, 255, 0.75), 1px -1px 10px rgba(255, 255, 255, 0.75), inset -1px 1px 10px rgba(255, 255, 255, 0.75), inset 1px -1px 10px rgba(255, 255, 255, 0.75);
+}
+
+.solid.c0 {
+  background-color: #0f0;
+  box-shadow: -1px 1px 10px rgba(0, 255, 0, 0.75), 1px -1px 10px rgba(0, 255, 0, 0.75);
+}
+
+.solid.c1 {
+  background-color: #0ff;
+  box-shadow: -1px 1px 10px rgba(0, 255, 255, 0.75), 1px -1px 10px rgba(0, 255, 255, 0.75);
+}
+
+.solid.c2 {
+  background-color: #f0f;
+  box-shadow: -1px 1px 10px rgba(255, 0, 255, 0.75), 1px -1px 10px rgba(255, 0, 255, 0.75);
+}
+
+.outline.c0 {
+  border-color: #0f0;
+  box-shadow: -1px 1px 10px rgba(0, 255, 0, 0.75), 1px -1px 10px rgba(0, 255, 0, 0.75), inset -1px 1px 10px rgba(0, 255, 0, 0.75), inset 1px -1px 10px rgba(0, 255, 0, 0.75);
+}
+
+.outline.c1 {
+  border-color: #0ff;
+  box-shadow: -1px 1px 10px rgba(0, 255, 255, 0.75), 1px -1px 10px rgba(0, 255, 255, 0.75), inset -1px 1px 10px rgba(0, 255, 255, 0.75), inset 1px -1px 10px rgba(0, 255, 255, 0.75);
+}
+
+.outline.c2 {
+  border-color: #f0f;
+  box-shadow: -1px 1px 10px rgba(255, 0, 255, 0.75), 1px -1px 10px rgba(255, 0, 255, 0.75), inset -1px 1px 10px rgba(255, 0, 255, 0.75), inset 1px -1px 10px rgba(255, 0, 255, 0.75);
 }
 
 .info {
