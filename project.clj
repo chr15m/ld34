@@ -54,7 +54,7 @@
                        :min {:source-paths ["env/prod/cljs"]
                              :compiler {:output-to "build/js/app.js"
                                         :main "reagent-game-test.prod"
-                                        :optimizations :advanced
+                                        :optimizations :simple
                                         :externs ["externs.js"]
                                         :foreign-libs [{:file "https://raw.githubusercontent.com/chr15m/jsfxr/master/sfxr.js" :provides ["jsfxr"]}
                                                        {:file "https://raw.githubusercontent.com/chr15m/jsfxr/master/riffwave.js" :provides ["RIFFWAVE"]}
