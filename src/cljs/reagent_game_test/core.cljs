@@ -63,6 +63,7 @@
 
 (defn drag-end [ev]
   (when @drag
+    (sfx/play :blip)
     ; apply impulse
     (let [[dx dy pos angle distance] (get-drag-values ev)]
       (physics/apply-impulse @physics-engine (:source-id @drag) (* dx physics-scale -0.004) (* dy physics-scale -0.004)))
@@ -112,10 +113,19 @@
                             :angle (/ b.angle (* Math.PI 2))} b.entity))))))
 
 (defn engine-collision [ev]
-  (doall (for [p ev.pairs]
-           (do
-           (js/console.log "collision" p.bodyA p.bodyB)
-           (sfx/play :bump-1)))))
+  (doseq [p ev.pairs]
+    (do
+      (js/console.log "collision" p.bodyA p.bodyB)
+      (doseq [b [p.bodyA p.bodyB]]
+        (do
+          (js/console.log "hi" b (.-label b) (.-id b))
+            (when
+              (= (.-label b) "Player")
+              (set! (.-entity b) (-> (.-entity b)
+                                     (update-in [:heart-size] inc)
+                                     (assoc-in [:style :font-size] (str (.toFixed (/ (get-in (.-entity b) [:heart-size]) 10) 2) "em")))))))
+      (let [sfx-name (str "bump-" (+ (js/Math.round (* (js/Math.random) 2)) 1))]
+        (sfx/play (keyword sfx-name))))))
 
 (defn make-box [p1 p2 s1 s2 & [options entity]]
   (let [extent (:extent @viewport-size)
@@ -181,7 +191,6 @@
 ; get the real viewport size for the first time
 (swap! viewport-size re-calculate-viewport-size)
 
-
 (defonce listeners (do
   ; update the current viewport size if it changes
   (js/window.addEventListener "resize" #(swap! viewport-size re-calculate-viewport-size))
@@ -198,9 +207,9 @@
 (defonce engine
   (let [engine (physics/make-physics-engine #(engine-updated %) #(engine-collision %))]
     (print "creating physics engine")
-    (let [boxA (make-box -0.2 0.2 0.2 0.2 {} {:symbol "❤" :style {:font-size "0.5em"} :color 1 :entity-args {:on-click play-blip :on-mouse-down drag-start}})
+    (let [boxA (make-box -0.2 0.2 0.2 0.2 {:label "Player"} {:symbol "❤" :heart-size 5 :style {:font-size "0.5em"} :color 1 :entity-args {:on-click play-blip :on-mouse-down drag-start}})
           boxB (make-box 0.3 0.5 0.2 0.2)
-          ground (make-box 0 0.9 1.0 0.1 {:isStatic true})]
+          ground (make-box 0 0.95 3.0 0.05 {:isStatic true})]
       (physics/add engine.world (clj->js [boxA boxB ground])))
     (reset! physics-engine engine)
     (physics/run engine)))
