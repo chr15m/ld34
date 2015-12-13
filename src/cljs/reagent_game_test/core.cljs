@@ -72,6 +72,35 @@
   (-> old-state
       (assoc-in [:svg 1 :r] (+ 0.04 (* (Math.cos (/ now 200)) 0.001)))))
 
+(defn engine-updated [engine]
+  ; (print "renderer.world")
+  ; (js/console.log engine.world.bodies)  
+  (doall (for [b engine.world.bodies]
+           ; (js/console.log b)
+           (let [game-id (str "physics-" b.id)
+                 extent (:extent @viewport-size)
+                 half-extent (/ extent 2)]
+             ;(print game-id)
+             ;(print b.position)
+             (swap! game-state assoc-in
+                    [:entities game-id]
+                    (merge {:id game-id
+                            :symbol ""
+                            :color 0
+                            :class "outline"
+                            :size [(aget b.renderInfo.originalSize 0) (aget b.renderInfo.originalSize 1)]
+                            :pos [(/ (aget b.position "x") 1000.0) (/ (aget b.position "y") 1000.0)]
+                            :angle (/ b.angle (* Math.PI 2))} b.entity))))))
+
+(defn make-box [p1 p2 s1 s2 & [options entity]]
+  (let [extent (:extent @viewport-size)
+        original-pos [p1 p2 s1 s2]
+        pos (vec (map #(* % 1000) original-pos))
+        ; pos original-pos
+        new-options (clj->js (merge options {:renderInfo {:originalSize [s1 s2]}}))]
+    (set! (.-entity new-options) entity)
+    (apply physics/rectangle (conj pos new-options))))
+
 ; insert a single new entity record into the game state and kick off its control loop
 ; entity-definition = :symbol :color :pos :angle :behaviour
 (defn make-entity [entity-definition]
@@ -96,6 +125,28 @@
 
 (defn play-blip [ev] (sfx/play :blip))
 
+; define our initial game entities
+(make-entity {:symbol "◎" :color 0 :pos [-0.3 -0.2] :angle 0 :behaviour behaviour-loop :size [0.2 0.2] :entity-args {:on-click play-blip}})
+(make-entity {:symbol "❤" :color 1 :pos [0 0] :angle 0 :class "boss" :size [0.2 0.2]})
+;(make-entity {:symbol "◍" :color 0 :pos [-20 300] :angle 0 :behaviour behaviour-rock})
+(make-entity {:symbol "⬠" :color 0 :pos [-0.35 -0.3] :angle 0 :size [0.2 0.2]})
+(make-entity {:symbol "▼" :color 0 :pos [-1.0 1.0] :angle 0 :size [0.2 0.2]})
+(make-entity {:symbol "➤" :color 1 :pos [0.3 0.2] :angle 0 :size [0.2 0.2]})
+(make-entity {:symbol "⚡" :color 0 :pos [0.5 -0.2] :angle 0 :size [0.2 0.2]})
+
+(make-entity {:pos [-1.0 0]
+              :size [0.3 0.3]
+              :angle 0
+              :behaviour behaviour-expand
+              :on-click play-blip
+              :svg [:circle {:cx 0.15
+                             :cy 0.15
+                             :r 0.04
+                             :style {:fill "#0f0"
+                                     :filter "url(#glowfilter)"}}]})
+;; -------------------------
+;; Components
+
 (defn component-svg [[w h] id style svg-content]
   (let [rw (* w (:extent @viewport-size))
         rh (* h (:extent @viewport-size))]
@@ -117,55 +168,6 @@
                          <feMergeNode/><feMergeNode in='SourceGraphic'/>
                          </feMerge>"}}]]
      svg-content]))
-
-(defn engine-updated [engine]
-  ; (print "renderer.world")
-  ; (js/console.log engine.world.bodies)  
-  (doall (for [b engine.world.bodies]
-           ; (js/console.log b)
-           (let [game-id (str "physics-" b.id)
-                 extent (:extent @viewport-size)
-                 half-extent (/ extent 2)]
-             ;(print game-id)
-             ;(print b.position)
-             (swap! game-state assoc-in
-                    [:entities game-id]
-                    (merge {:id game-id
-                     :symbol ""
-                     :color 0
-                     :class "outline"
-                     :size [(aget b.renderInfo.originalSize 0) (aget b.renderInfo.originalSize 1)]
-                     :pos [(/ (aget b.position "x") 1000.0) (/ (aget b.position "y") 1000.0)]
-                     :angle (/ b.angle (* Math.PI 2))} b.entity))))))
-
-(defn make-box [p1 p2 s1 s2 & [options entity]]
-  (let [extent (:extent @viewport-size)
-        original-pos [p1 p2 s1 s2]
-        pos (vec (map #(* % 1000) original-pos))
-        ; pos original-pos
-        new-options (clj->js (merge options {:renderInfo {:originalSize [s1 s2]}}))]
-    (set! (.-entity new-options) entity)
-    (apply physics/rectangle (conj pos new-options))))
-
-; define our initial game entities
-(make-entity {:symbol "◎" :color 0 :pos [-0.3 -0.2] :angle 0 :behaviour behaviour-loop :size [0.2 0.2] :entity-args {:on-click play-blip}})
-(make-entity {:symbol "❤" :color 1 :pos [0 0] :angle 0 :class "boss" :size [0.2 0.2]})
-;(make-entity {:symbol "◍" :color 0 :pos [-20 300] :angle 0 :behaviour behaviour-rock})
-(make-entity {:symbol "⬠" :color 0 :pos [-0.35 -0.3] :angle 0 :size [0.2 0.2]})
-(make-entity {:symbol "▼" :color 0 :pos [-1.0 1.0] :angle 0 :size [0.2 0.2]})
-(make-entity {:symbol "➤" :color 1 :pos [0.3 0.2] :angle 0 :size [0.2 0.2]})
-(make-entity {:symbol "⚡" :color 0 :pos [0.5 -0.2] :angle 0 :size [0.2 0.2]})
-
-(make-entity {:pos [-1.0 0]
-              :size [0.3 0.3]
-              :angle 0
-              :behaviour behaviour-expand
-              :on-click play-blip
-              :svg [:circle {:cx 0.15
-                             :cy 0.15
-                             :r 0.04
-                             :style {:fill "#0f0"
-                                     :filter "url(#glowfilter)"}}]})
 
 ;; -------------------------
 ;; Views
@@ -201,9 +203,9 @@
 (defonce engine
   (let [engine (physics/make-physics-engine #(engine-updated %))]
     (print "creating physics engine")
-    (let [boxA (make-box 0.3 0.2 0.2 0.2 {} {:symbol "⚡"})
-          boxB (make-box 0.45 0.5 0.2 0.2)
-          ground (make-box 0.4 0.9 1.0 0.1 {:isStatic true})]
+    (let [boxA (make-box -0.2 0.2 0.2 0.2 {} {:symbol "❤" :color 1})
+          boxB (make-box 0.3 0.5 0.2 0.2)
+          ground (make-box 0 0.9 1.0 0.1 {:isStatic true})]
       (physics/add engine.world #js [boxA boxB ground]))
     (physics/run engine)))
 
