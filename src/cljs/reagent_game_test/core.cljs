@@ -16,9 +16,11 @@
 ; all of the entities that appear in our game
 (def game-state (atom {:entities {}}))
 (def drag (atom nil))
+(defonce physics-engine (atom nil))
 (defonce viewport-size (atom {}))
 
 (def blurb "a tiny cljs game engine experiment.")
+(def physics-scale 1000.0)
 
 (print blurb)
 
@@ -44,20 +46,28 @@
 
 (defn get-time-now [] (.getTime (js/Date.)))
 
+(defn get-drag-values [ev]
+  (let [[x y] (translate-screen-coordinates [ev.clientX ev.clientY])
+        [dx dy] [(- ((:source-point @drag) 0) x) (- ((:source-point @drag) 1) y)]
+        pos [(+ (/ dx 2.0) x) (+ (/ dy 2.0) y)]
+        angle (js/Math.atan2 dy dx)
+        distance (js/Math.sqrt (+ (js/Math.pow dx 2) (js/Math.pow dy 2)))]
+    [dx dy pos angle distance]))
+
 (defn drag-start [ev]
-  (reset! drag (translate-screen-coordinates [ev.target.offsetLeft ev.target.offsetTop])))
+  (reset! drag {:source-point (translate-screen-coordinates [ev.target.offsetLeft ev.target.offsetTop]) :source-id (.getAttribute ev.target "id")}))
 
 (defn drag-update [ev]
-  (let [[x y] (translate-screen-coordinates [ev.clientX ev.clientY])
-        [dx dy] [(- (@drag 0) x) (- (@drag 1) y)]
-        pos [(+ (/ dx 2.0) x) (+ (/ dy 2.0) y)]
-        angle (/ (js/Math.atan2 dy dx) (* Math.PI 2))
-        distance (js/Math.sqrt (+ (js/Math.pow dx 2) (js/Math.pow dy 2)))]
-    (swap! game-state assoc-in [:entities :dragger] {:id :dragger :pos pos :symbol "" :class "solid" :color 2 :size [distance 0.01] :angle angle :style {:opacity 0.75 :z-index 1000}})))
+  (let [[dx dy pos angle distance] (get-drag-values ev)]
+    (swap! game-state assoc-in [:entities :dragger] {:id :dragger :pos pos :symbol "" :class "solid" :color 2 :size [distance 0.01] :angle (/ angle (* Math.PI 2)) :style {:z-index 1000}})))
 
 (defn drag-end [ev]
-  (swap! game-state update-in [:entities] dissoc :dragger)
-  (reset! drag nil))
+  (when @drag
+    ; apply impulse
+    (let [[dx dy pos angle distance] (get-drag-values ev)]
+      (physics/apply-impulse @physics-engine (:source-id @drag) (* dx physics-scale -0.004) (* dy physics-scale -0.004)))
+    (swap! game-state update-in [:entities] dissoc :dragger)
+    (reset! drag nil)))
 
 ; turn a position into a CSS style declaration
 (defn compute-position-style [{[x y] :pos angle :angle [ew eh] :size :or {angle 0}}]
@@ -102,13 +112,13 @@
                             :color 0
                             :class "outline"
                             :size [(aget b.renderInfo.originalSize 0) (aget b.renderInfo.originalSize 1)]
-                            :pos [(/ (aget b.position "x") 1000.0) (/ (aget b.position "y") 1000.0)]
+                            :pos [(/ (aget b.position "x") physics-scale) (/ (aget b.position "y") physics-scale)]
                             :angle (/ b.angle (* Math.PI 2))} b.entity))))))
 
 (defn make-box [p1 p2 s1 s2 & [options entity]]
   (let [extent (:extent @viewport-size)
         original-pos [p1 p2 s1 s2]
-        pos (vec (map #(* % 1000) original-pos))
+        pos (vec (map #(* % physics-scale) original-pos))
         ; pos original-pos
         new-options (clj->js (merge options {:renderInfo {:originalSize [s1 s2]}}))]
     (set! (.-entity new-options) entity)
@@ -141,10 +151,11 @@
 ; define our initial game entities
 (make-entity {:symbol "◎" :color 0 :pos [-0.3 -0.2] :angle 0 :behaviour behaviour-loop :size [0.2 0.2] :entity-args {:on-click play-blip}})
 (make-entity {:symbol "❤" :color 1 :pos [0 0] :angle 0 :class "boss" :size [0.2 0.2]})
-(make-entity {:symbol "◍" :color 0 :pos [-0.2 0.3] :angle 0 :size [0.2 0.2] :behaviour behaviour-rock :style {:border "1px dashed silver" :border-radius 52}})
+(make-entity {:symbol "☢" :color 0 :pos [-0.2 0.3] :angle 0 :size [0.2 0.2] :behaviour behaviour-rock :style {:border "1px dashed silver" :border-radius 52}})
 (make-entity {:symbol "⬠" :color 0 :pos [-0.35 -0.3] :angle 0 :size [0.2 0.2]})
 (make-entity {:symbol "▼" :color 0 :pos [-1.0 1.0] :angle 0 :size [0.2 0.2]})
-(make-entity {:symbol "➤" :color 1 :pos [1.0 0.2] :angle 0 :size [0.2 0.2]})
+(make-entity {:symbol "⚔" :color 0 :pos [1.0 0.9] :angle 0 :size [0.2 0.2]})
+(make-entity {:symbol "☠" :color 1 :pos [1.0 0.2] :angle 0 :size [0.2 0.2]})
 (make-entity {:symbol "⚡" :color 0 :pos [0.5 -0.2] :angle 0 :size [0.2 0.2]})
 
 (make-entity {:pos [-1.0 0]
@@ -193,9 +204,9 @@
       (doall (map
                (fn [[id e]] (cond
                               ; render a "symbol"
-                              (:symbol e) [:div (merge {:class (str "sprite c" (:color e) " " (:class e)) :key id :style (merge (compute-position-style e) (:style e))} (:entity-args e)) (:symbol e)]
+                              (:symbol e) [:div (merge {:class (str "sprite c" (:color e) " " (:class e)) :key id :id id :style (merge (compute-position-style e) (:style e))} (:entity-args e)) (:symbol e)]
                               ; render an SVG
-                              (:svg e) [:div (merge {:key id} (:entity-args e)) [component-svg (:size e) id (compute-position-style e) (:svg e)]]))
+                              (:svg e) [:div (merge {:key id :id id} (:entity-args e)) [component-svg (:size e) id (compute-position-style e) (:svg e)]]))
                (:entities @game-state)))]
     ; info blurb
     [:div {:class "info c2"} blurb [:p "[ " [:a {:href "http://github.com/chr15m/tiny-cljs-game-engine"} "source code"] " ]"]]
@@ -229,6 +240,7 @@
           boxB (make-box 0.3 0.5 0.2 0.2)
           ground (make-box 0 0.9 1.0 0.1 {:isStatic true})]
       (physics/add engine.world #js [boxA boxB ground]))
+    (reset! physics-engine engine)
     (physics/run engine)))
 
 (defn mount-root []

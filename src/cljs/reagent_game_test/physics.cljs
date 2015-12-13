@@ -22,3 +22,7 @@
       (js/Matter.Engine.run engine)
   engine)
 
+(defn apply-impulse [engine id dx dy]
+  (doall (for [b engine.world.bodies]
+    (if (= b.id (js/parseInt (.substr id 8)))
+      (js/Matter.Body.applyForce b #js {:x 0 :y 0} #js {:x dx :y dy})))))
