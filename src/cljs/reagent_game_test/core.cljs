@@ -134,6 +134,14 @@
                      :pos [(/ (- (aget b.position "x") 500) 1000.0) (/ (- (aget b.position "y") 500) 1000.0)]
                      :angle (/ b.angle (* Math.PI 2))})))))
 
+(defn make-box [p1 p2 s1 s2 & [options entity]]
+  (let [extent (:extent @viewport-size)
+        original-pos [p1 p2 s1 s2]
+        pos (vec (map #(* % 1000) original-pos))
+        ; pos original-pos
+        new-options (clj->js (merge options {:renderInfo {:originalSize [s1 s2]} :entity entity}))]
+    (apply physics/rectangle (conj pos new-options))))
+
 ; define our initial game entities
 (make-entity {:symbol "◎" :color 0 :pos [-300 -200] :angle 0 :behaviour behaviour-loop :on-click play-blip})
 (make-entity {:symbol "❤" :color 1 :pos [0 0] :angle 0 :class "boss" :style {:border "1px solid red"}})
