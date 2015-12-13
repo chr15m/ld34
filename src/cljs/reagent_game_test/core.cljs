@@ -60,8 +60,8 @@
   old-state)
 
 (defn behaviour-loop [old-state elapsed now]
-  (assoc old-state :pos [(* (Math.cos (/ now 500)) 0.100)
-                         (* (Math.sin (/ now 500)) 0.100)]))
+  (assoc old-state :pos [(* (Math.cos (/ now 500)) 0.200)
+                         (* (Math.sin (/ now 500)) 0.200)]))
 
 (defn behaviour-rock [old-state elapsed now]
   (-> old-state
