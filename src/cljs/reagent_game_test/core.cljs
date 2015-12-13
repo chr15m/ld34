@@ -143,13 +143,13 @@
     (apply physics/rectangle (conj pos new-options))))
 
 ; define our initial game entities
-(make-entity {:symbol "◎" :color 0 :pos [-300 -200] :angle 0 :behaviour behaviour-loop :on-click play-blip})
-(make-entity {:symbol "❤" :color 1 :pos [0 0] :angle 0 :class "boss" :style {:border "1px solid red"}})
+(make-entity {:symbol "◎" :color 0 :pos [-0.3 -0.2] :angle 0 :behaviour behaviour-loop :size [0.2 0.2] :on-click play-blip})
+(make-entity {:symbol "❤" :color 1 :pos [0 0] :angle 0 :class "boss" :size [0.2 0.2]})
 ;(make-entity {:symbol "◍" :color 0 :pos [-20 300] :angle 0 :behaviour behaviour-rock})
-(make-entity {:symbol "⬠" :color 0 :pos [-0.350 -0.50] :angle 0})
-(make-entity {:symbol "▼" :color 0 :pos [-1.0 1.0] :angle 0})
-(make-entity {:symbol "➤" :color 1 :pos [0.300 0.200] :angle 0})
-(make-entity {:symbol "⚡" :color 0 :pos [0.50 -0.200] :angle 0})
+(make-entity {:symbol "⬠" :color 0 :pos [-0.35 -0.3] :angle 0 :size [0.2 0.2]})
+(make-entity {:symbol "▼" :color 0 :pos [-1.0 1.0] :angle 0 :size [0.2 0.2]})
+(make-entity {:symbol "➤" :color 1 :pos [0.3 0.2] :angle 0 :size [0.2 0.2]})
+(make-entity {:symbol "⚡" :color 0 :pos [0.5 -0.2] :angle 0 :size [0.2 0.2]})
 
 (make-entity {:pos [-1.0 -1.0]
               :size [0.3 0.3]
