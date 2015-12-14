@@ -215,12 +215,18 @@
   (js/window.addEventListener "mousemove" (fn [ev] (if @drag (drag-update ev)) (.preventDefault ev)))))
 
 (defonce engine
-  (let [engine (physics/make-physics-engine #(engine-updated %) #(engine-collision %))]
+  (let [engine (physics/make-physics-engine #(engine-updated %) #(engine-collision %))
+        width (* 2 (:scaled-width @viewport-size))
+        height (* 2 (:scaled-height @viewport-size))]
     (print "creating physics engine")
-    (let [boxA (make-box -0.2 0.2 0.2 0.2 {:label "Player"} {:symbol "❤" :heart-size 5 :style {:font-size "0.5em"} :color 1 :entity-args {:on-click play-blip :on-mouse-down drag-start}})
-          boxB (make-box 0.3 0.5 0.2 0.2)
-          ground (make-box 0 0.95 3.0 0.05 {:isStatic true})]
-      (physics/add engine.world (clj->js [boxA boxB ground])))
+    ; add the player
+    (physics/add engine.world (clj->js [(make-box -0.2 0.2 0.2 0.2 {:label "Player"} {:symbol "❤" :heart-size 5 :style {:font-size "0.5em"} :color 1 :entity-args {:on-click #(sfx/play :blip) :on-mouse-down drag-start}})]))
+    (physics/add engine.world (clj->js [(make-box 0.3 0.5 0.2 0.2 {:label "Block" :isStatic true} {:symbol "☠"})]))
+    ; add walls
+    (physics/add engine.world (clj->js [(make-box 0 0.95 width 0.05 {:isStatic true})
+                                        (make-box 0 -0.95 width 0.05 {:isStatic true})
+                                        (make-box (/ width -2.0) 0 0.05 height {:isStatic true})    
+                                        (make-box (/ width 2.0) 0 0.05 height {:isStatic true})])) 
     (reset! physics-engine engine)
     (physics/run engine)))
 
