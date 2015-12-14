@@ -30,6 +30,9 @@
 ;; -------------------------
 ;; Helper functions
 
+(defn rnd [] (js/Math.random))
+(defn rnd-int [a b] (js/Math.round (+ (* (js/Math.random) (- b a)) a)))
+
 ; handle window resizing
 (defn re-calculate-viewport-size [old-viewport-size]
   (let [viewport-size (dom/getViewportSize (dom/getWindow))
