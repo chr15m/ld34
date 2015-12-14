@@ -38,7 +38,9 @@
     {:w w
      :h h
      :extent (/ (min w h) 2.0)
-     :ratio (/ (min w h) 1024.0)}))
+     :ratio (/ (min w h) 1024.0)
+     :scaled-width (/ w (min w h))
+     :scaled-height (/ h (min w h))}))
 
 (defn translate-screen-coordinates [[x y]]
   (let [{:keys [w h extent ratio]} @viewport-size]
