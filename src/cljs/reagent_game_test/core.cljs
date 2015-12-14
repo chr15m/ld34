@@ -19,6 +19,8 @@
 (def drag (atom nil))
 (defonce physics-engine (atom nil))
 (defonce viewport-size (atom {}))
+(defonce hurt-count (atom 20))
+(defonce won (atom 1.0))
 
 (def blurb "ld34.")
 (def physics-scale 1000.0)
@@ -100,6 +102,15 @@
       (assoc-in [:pos 0] (* (Math.cos (/ now 500)) 0.05))
       (assoc-in [:angle] (Math.cos (/ now 2000)))))
 
+(defn make-box [p1 p2 s1 s2 & [options entity]]
+  (let [extent (:extent @viewport-size)
+        original-pos [p1 p2 s1 s2]
+        pos (vec (map #(* % physics-scale) original-pos))
+        ; pos original-pos
+        new-options (clj->js (merge options {:renderInfo {:originalSize [s1 s2]}}))]
+    (set! (.-entity new-options) entity)
+    (apply physics/rectangle (conj pos new-options))))
+
 (defn engine-updated [engine]
   ; (print "renderer.world")
   ; (js/console.log engine.world.bodies)  
@@ -123,6 +134,16 @@
   (doseq [[id o] @delete-physics-entities]
     (swap! game-state update-in [:entities] dissoc id)
     (physics/remove (.-world @physics-engine) o))
+  ; subtract number removed from hurt-count
+  (swap! hurt-count (fn [old-hurt-count]
+                      (let [new-hurt-count (- old-hurt-count (count @delete-physics-entities))]
+                        ; if we've hit zero the first time, add the goal box
+                        (if (and (> old-hurt-count 0) (<= new-hurt-count 0))
+                          (physics/add engine.world (clj->js [(make-box 0 -0.5 0.2 0.2
+                                                                        {:label "Luv" :isStatic true}
+                                                                        {:symbol "❤" :style {:font-size "5.0em"} :color 2})])))
+                        new-hurt-count)))
+  
   ; reset delete list
   (reset! delete-physics-entities {}))
 
@@ -138,18 +159,15 @@
             ; hitting a block grows your heart
             (set! (.-entity b) (-> (.-entity b)
                                    (update-in [:heart-size] #(+ % 3))
-                                   (assoc-in [:style :font-size] (str (.toFixed (/ (get-in (.-entity b) [:heart-size]) 10) 2) "em")))))))
+                                   (assoc-in [:style :font-size] (str (.toFixed (/ (get-in (.-entity b) [:heart-size]) 10) 2) "em")))))
+          (when (= (.-label o) "Luv")
+            (go-loop []
+                     (<! (timeout 20))
+                     (swap! won #(js/Math.max (- % 0.01) 0))   
+                     (if (> @won 0)
+                       (recur))))))
       (let [sfx-name (str "bump-" (+ (js/Math.round (* (js/Math.random) 2)) 1))]
         (sfx/play (keyword sfx-name))))))
-
-(defn make-box [p1 p2 s1 s2 & [options entity]]
-  (let [extent (:extent @viewport-size)
-        original-pos [p1 p2 s1 s2]
-        pos (vec (map #(* % physics-scale) original-pos))
-        ; pos original-pos
-        new-options (clj->js (merge options {:renderInfo {:originalSize [s1 s2]}}))]
-    (set! (.-entity new-options) entity)
-    (apply physics/rectangle (conj pos new-options))))
 
 ; insert a single new entity record into the game state and kick off its control loop
 ; entity-definition = :symbol :color :pos :angle :behaviour
@@ -173,28 +191,22 @@
     ; return the entity we created
     entity))
 
-; define our initial game entities
-;(make-entity {:symbol "◎" :color 0 :pos [-0.3 -0.2] :angle 0 :behaviour behaviour-loop :size [0.2 0.2] :entity-args {:on-click play-blip}})
-;(make-entity {:symbol "❤" :color 2 :pos [0 0] :angle 0 :class "boss" :size [0.2 0.2]})
-;(make-entity {:symbol "☢" :color 0 :pos [-0.2 0.3] :angle 0 :size [0.2 0.2]})
-;(make-entity {:symbol "⬠" :color 0 :pos [-0.35 -0.3] :angle 0 :size [0.2 0.2]})
-;(make-entity {:symbol "▼" :color 0 :pos [-0.8 0.8] :angle 0 :size [0.2 0.2]})
-;(make-entity {:symbol "⚔" :color 0 :pos [1.0 0.75] :angle 0 :size [0.2 0.2]})
-;(make-entity {:symbol "☠" :color 1 :pos [1.0 0.2] :angle 0 :size [0.2 0.2]})
-;(make-entity {:symbol "⚡" :color 0 :pos [0.5 -0.2] :angle 0 :size [0.2 0.2]})
-
 ;; -------------------------
 ;; Views
 
 (defn home-page []
   [:div
     [:div {:id "game-board"}
-      ; DOM "scene grapher"
-      (doall (map
-               (fn [[id e]] [:div (merge {:class (str "sprite c" (:color e) " " (:class e)) :key id :id id :style (merge (compute-position-style e) (:style e))} (:entity-args e)) (:symbol e)])
-               (:entities @game-state)))]
+        ; DOM "scene grapher"
+        (doall (map
+                 (fn [[id e]] [:div (merge {:class (str "sprite c" (:color e) " " (:class e)) :key id :id id :style (merge (compute-position-style e) (:style e))} (:entity-args e)) (:symbol e)])
+                 (:entities @game-state)))
+        (if (< @won 1.0) [:div {:id "fade" :style {:opacity (- 1.0 @won)}}])]
     ; info blurb
-    [:div {:class "info c2"} blurb " [ " [:a {:href "http://github.com/chr15m/ld34"} "source code"] " ]"]
+    (if (<= @won 0)
+      [:div {:class "info-container"}
+        [:div {:class "info c2"} blurb " [ " [:a {:href "http://github.com/chr15m/ld34"} "source code"] " ]"]
+        [:div {:class "info smaller c2"} [:p "don’t think of all the misery"] [:p "but of all the beauty that remains"] [:p "-- anne frank"]]])
     ; tv scan-line effect
     [:div {:id "overlay"}]])
 
@@ -226,7 +238,7 @@
     (print "creating physics engine")
     ; add the player
     (physics/add engine.world (clj->js [(make-box -0.2 0.2 0.2 0.2 {:label "Player"} {:symbol "❤" :heart-size 5 :style {:font-size "0.5em"} :color 1 :entity-args {:on-click #(sfx/play :blip) :on-mouse-down drag-start}})]))
-    (doseq [x (range 20)]
+    (doseq [x (range @hurt-count)]
       (physics/add engine.world (clj->js [(make-box (* (- (rnd) 0.5) width 1.6)  (* (- (rnd) 0.5) height 1.6) 0.2 0.2 {:label "Block" :isStatic true} {:symbol (get bad-things (rnd-int 0 3)) :color (rnd-int 0 2)})])))
     ; add walls
     (physics/add engine.world (clj->js [(make-box 0 0.95 width-doubled 0.05 {:isStatic true})
