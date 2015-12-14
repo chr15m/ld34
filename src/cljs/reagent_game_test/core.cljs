@@ -129,16 +129,16 @@
           (swap! game-state update-in [:entities] dissoc (str "physics-" (.-id new-star)))
           (physics/remove (.-world @physics-engine) new-star))
       (go (<! (timeout 10))
-          (physics/apply-impulse @physics-engine (str "physics-" (.-id new-star)) (* 2 (- (rnd) 0.5)) (* 2 (- (rnd) 0.75))))
+          (physics/apply-impulse @physics-engine (str "physics-" (.-id new-star)) (* 2 (- (rnd) 0.5)) (* 2 (- (rnd) 0.9))))
       new-star)))
 
-(defn make-stars [c x y d]
+(defn make-stars [c o d]
   (go-loop [counter c]
-           (print counter)
-           (physics/add (.-world @physics-engine) (clj->js [(make-star x y)]))
-           (<! (timeout d))
-           (when (> counter 0)
-             (recur (- counter 1)))))
+           (let [x (/ (aget (.-position o) "x") physics-scale) y (/ (aget (.-position o) "y") physics-scale)]
+             (physics/add (.-world @physics-engine) (clj->js [(make-star x y)]))
+             (<! (timeout d))
+             (when (> counter 0)
+               (recur (- counter 1))))))
 
 (defn engine-updated [engine]
   ; (print "renderer.world")
@@ -185,7 +185,7 @@
           (= (.-label b) "Player")
           (when (= (.-label o) "Block")
             (play-random-sound "bump")
-            (make-stars 3 (/ (aget (.-position o) "x") physics-scale) (/ (aget (.-position o) "y") physics-scale) 10)
+            (make-stars 3 o 10)
             ; add to delete list
             (swap! delete-physics-entities assoc-in [(str "physics-" (.-id o))] o)
             ; hitting a block grows your heart
@@ -194,7 +194,7 @@
                                    (assoc-in [:style :font-size] (str (.toFixed (/ (get-in (.-entity b) [:heart-size]) 10) 2) "em")))))
           (when (= (.-label o) "Luv")
             (if (= @won 1.0)
-              (make-stars 40 (/ (aget (.-position o) "x") physics-scale) (/ (aget (.-position o) "y") physics-scale) 100))
+              (make-stars 100 b 50))
             (go-loop []
                      (<! (timeout 20))
                      (swap! won #(js/Math.max (- % 0.005) 0))   
