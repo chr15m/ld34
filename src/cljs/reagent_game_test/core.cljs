@@ -251,7 +251,7 @@
     (if (<= @won 0)
       [:div {:class "info-container"}
         [:div {:class "info c3"} blurb " [ " [:a {:href "http://github.com/chr15m/ld34"} "source code"] " ]"]
-        [:div {:class "info smaller c3"} [:p "it is only with the heart that one can see rightly"] [:p "what is essential is invisible to the eye"] [:p "-- the little prince"]]])
+        [:div {:class "info smaller c3"} [:p "it is only with the heart that one can see rightly"] [:p "what is essential is invisible to the eye"] [:p "-- the little prince"] [:p "[ " [:a {:href (str "?play-again-" (js/Math.random))} "play again"] " ]"]]])
     ; tv scan-line effect
     [:div {:id "overlay"}]])
 
