@@ -1,7 +1,7 @@
 @import url(//fonts.googleapis.com/css?family=Dosis:400,700);
 
 body {
-  font-family: 'Helvetica Neue', Verdana, Helvetica, Arial, sans-serif;
+  font-family: Dosis;
   max-width: 600px;
   margin: 0 auto;
   padding-top: 1em;
