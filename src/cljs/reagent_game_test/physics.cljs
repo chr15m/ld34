@@ -4,8 +4,10 @@
 (enable-console-print!)
 
 (def rectangle js/Matter.Bodies.rectangle)
+(def circle js/Matter.Bodies.circle)
 (def add js/Matter.World.add)
 (def remove js/Matter.World.remove)
+(def apply-force js/Matter.Body.applyForce)
 
 (defn make-renderer [update-callback]
   (def renderer {:create (fn [options]
