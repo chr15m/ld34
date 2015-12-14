@@ -69,18 +69,28 @@ a:hover {
 }
 
 .c2 {
+  color: #ff0;
+  text-shadow: -1px 1px 10px rgba(255, 255, 0, 0.75), 1px -1px 10px rgba(255, 255, 0, 0.75);
+}
+
+.c3 {
   color: #f0f;
   text-shadow: -1px 1px 10px rgba(255, 0, 255, 0.75), 1px -1px 10px rgba(255, 0, 255, 0.75);
 }
 
+.c4 {
+  color: #fff;
+  text-shadow: -1px 1px 10px rgba(255, 255, 255, 0.75), 1px -1px 10px rgba(255, 255, 255, 0.75);
+}
+
 .solid {
-  border-radius: 3px;
+  border-radius: 8px;
   background: white;
   box-shadow: -1px 1px 10px rgba(255, 255, 255, 0.75), 1px -1px 10px rgba(255, 255, 255, 0.75);
 }
 
 .outline {
-  border-radius: 3px;
+  border-radius: 8px;
   border: 2px solid white;
   box-shadow: -1px 1px 10px rgba(255, 255, 255, 0.75), 1px -1px 10px rgba(255, 255, 255, 0.75), inset -1px 1px 10px rgba(255, 255, 255, 0.75), inset 1px -1px 10px rgba(255, 255, 255, 0.75);
 }
@@ -96,8 +106,18 @@ a:hover {
 }
 
 .solid.c2 {
+  background-color: #ff0;
+  box-shadow: -1px 1px 10px rgba(255, 255, 0, 0.75), 1px -1px 10px rgba(255, 255, 0, 0.75);
+}
+
+.solid.c3 {
   background-color: #f0f;
   box-shadow: -1px 1px 10px rgba(255, 0, 255, 0.75), 1px -1px 10px rgba(255, 0, 255, 0.75);
+}
+
+.solid.c4 {
+  background-color: #fff;
+  box-shadow: -1px 1px 10px rgba(255, 255, 255, 0.75), 1px -1px 10px rgba(255, 255, 255, 0.75);
 }
 
 .outline.c0 {
@@ -111,8 +131,18 @@ a:hover {
 }
 
 .outline.c2 {
+  border-color: #ff0;
+  box-shadow: -1px 1px 10px rgba(255, 255, 0, 0.75), 1px -1px 10px rgba(255, 255, 0, 0.75), inset -1px 1px 10px rgba(255, 255, 0, 0.75), inset 1px -1px 10px rgba(255, 255, 0, 0.75);
+}
+
+.outline.c3 {
   border-color: #f0f;
   box-shadow: -1px 1px 10px rgba(255, 0, 255, 0.75), 1px -1px 10px rgba(255, 0, 255, 0.75), inset -1px 1px 10px rgba(255, 0, 255, 0.75), inset 1px -1px 10px rgba(255, 0, 255, 0.75);
+}
+
+.outline.c4 {
+  border-color: #fff;
+  box-shadow: -1px 1px 10px rgba(255, 255, 255, 0.75), 1px -1px 10px rgba(255, 255, 255, 0.75), inset -1px 1px 10px rgba(255, 255, 255, 0.75), inset 1px -1px 10px rgba(255, 255, 255, 0.75);
 }
 
 .info {

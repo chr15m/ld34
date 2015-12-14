@@ -69,7 +69,7 @@
 
 (defn drag-update [ev]
   (let [[dx dy pos angle distance] (get-drag-values ev)]
-    (swap! game-state assoc-in [:entities :dragger] {:id :dragger :pos pos :symbol "" :class "solid" :color 2 :size [distance 0.01] :angle (/ angle (* Math.PI 2)) :style {:z-index 1000}})))
+    (swap! game-state assoc-in [:entities :dragger] {:id :dragger :pos pos :symbol "" :class "solid" :color 4 :size [distance 0.01] :angle (/ angle (* Math.PI 2)) :style {:z-index 1000}})))
 
 (defn drag-end [ev]
   (when @drag
@@ -140,10 +140,10 @@
                         ; if we've hit zero the first time, add the goal box
                         (if (and (> old-hurt-count 0) (<= new-hurt-count 0))
                           (go
-                            (<! (timeout 1000))
+                            (<! (timeout 2000))
                             (physics/add engine.world (clj->js [(make-box 0 -0.5 0.2 0.2
                                                                           {:label "Luv" :isStatic true}
-                                                                          {:symbol "❤" :style {:font-size "5.0em"} :color 2})]))))
+                                                                          {:symbol "❤" :style {:font-size "5.0em"} :color 3})]))))
                         new-hurt-count)))
   
   ; reset delete list
@@ -165,7 +165,7 @@
           (when (= (.-label o) "Luv")        
             (go-loop []
                      (<! (timeout 20))
-                     (swap! won #(js/Math.max (- % 0.01) 0))   
+                     (swap! won #(js/Math.max (- % 0.005) 0))   
                      (if (> @won 0)
                        (recur))))))
       (let [sfx-name (str "bump-" (+ (js/Math.round (* (js/Math.random) 2)) 1))]
@@ -207,8 +207,8 @@
     ; info blurb
     (if (<= @won 0)
       [:div {:class "info-container"}
-        [:div {:class "info c2"} blurb " [ " [:a {:href "http://github.com/chr15m/ld34"} "source code"] " ]"]
-        [:div {:class "info smaller c2"} [:p "don’t think of all the misery"] [:p "but of all the beauty that remains"] [:p "-- anne frank"]]])
+        [:div {:class "info c3"} blurb " [ " [:a {:href "http://github.com/chr15m/ld34"} "source code"] " ]"]
+        [:div {:class "info smaller c3"} [:p "don’t think of all the misery"] [:p "but of all the beauty that remains"] [:p "-- anne frank"]]])
     ; tv scan-line effect
     [:div {:id "overlay"}]])
 
@@ -239,11 +239,11 @@
         height-doubled (* 2 (:scaled-height @viewport-size))]
     (print "creating physics engine")
     ; add the player
-    (physics/add engine.world (clj->js [(make-box -0.2 0.2 0.2 0.2 {:label "Player"} {:symbol "❤" :heart-size 5 :style {:font-size "0.5em"} :color 1 :entity-args {:on-click #(sfx/play :blip) :on-mouse-down drag-start}})]))
+    (physics/add engine.world (clj->js [(make-box -0.2 0.2 0.2 0.2 {:label "Player"} {:symbol "❤" :heart-size 5 :style {:font-size "0.5em"} :color 4 :entity-args {:on-click #(sfx/play :blip) :on-mouse-down drag-start}})]))
     (doseq [x (range @hurt-count)]
       (physics/add engine.world (clj->js [(make-box (* (- (rnd) 0.5) width 1.6)  (* (- (rnd) 0.5) height 1.6) 0.2 0.2 {:label "Block" :isStatic true} {:symbol (get bad-things (rnd-int 0 3)) :color (rnd-int 0 2)})])))
     ; add walls
-    (physics/add engine.world (clj->js [(make-box 0 0.95 width-doubled 0.05 {:isStatic true})
+    (physics/add engine.world (clj->js [(make-box 0 1.0 width-doubled 0.05 {:isStatic true} {:class "solid"})
                                         (make-box 0 -0.95 width-doubled 0.05 {:isStatic true} {:style {:display "none"}})
                                         (make-box (* width -1.0) 0 0.05 height-doubled {:isStatic true} {:style {:display "none"}})    
                                         (make-box width 0 0.05 height-doubled {:isStatic true} {:style {:display "none"}})])) 
