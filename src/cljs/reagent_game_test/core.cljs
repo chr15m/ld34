@@ -56,26 +56,37 @@
 
 (defn get-time-now [] (.getTime (js/Date.)))
 
-(defn get-drag-values [ev]
-  (let [[x y] (translate-screen-coordinates [ev.clientX ev.clientY])
-        [dx dy] [(- ((:source-point @drag) 0) x) (- ((:source-point @drag) 1) y)]
+(defn get-drag-values []
+  (let [[x y] (translate-screen-coordinates (:dest-pointer @drag))
+        [sx sy] (translate-screen-coordinates (if (:source-object @drag)
+                                                [(.-offsetLeft (:source-object @drag)) (.-offsetTop (:source-object @drag))]
+                                                (:source-point @drag)))
+        [dx dy] [(- sx x) (- sy y)]
         pos [(+ (/ dx 2.0) x) (+ (/ dy 2.0) y)]
         angle (js/Math.atan2 dy dx)
         distance (js/Math.sqrt (+ (js/Math.pow dx 2) (js/Math.pow dy 2)))]
     [dx dy pos angle distance]))
 
-(defn drag-start [ev]
-  (reset! drag {:source-point (translate-screen-coordinates [ev.target.offsetLeft ev.target.offsetTop]) :source-id (.getAttribute ev.target "id")}))
-
-(defn drag-update [ev]
-  (let [[dx dy pos angle distance] (get-drag-values ev)]
+(defn drag-update [& [ev]]
+  (if (and @drag ev)
+    (swap! drag assoc :dest-pointer [ev.clientX ev.clientY]))
+  (let [[dx dy pos angle distance] (get-drag-values)]
     (swap! game-state assoc-in [:entities :dragger] {:id :dragger :pos pos :symbol "" :class "solid" :color 4 :size [distance 0.01] :angle (/ angle (* Math.PI 2)) :style {:z-index 1000}})))
+
+(defn drag-start [ev]
+  (reset! drag {:source-point (translate-screen-coordinates [ev.target.offsetLeft ev.target.offsetTop]) :source-id (.getAttribute ev.target "id") :source-object ev.target})
+  (go-loop []
+           (<! (timeout 20))
+           (if (and @drag ((@game-state :entities) :dragger))
+             (drag-update))
+           (if @drag (recur))))
 
 (defn drag-end [ev]
   (when @drag
+    (drag-update ev)
     (sfx/play :blip)
     ; apply impulse
-    (let [[dx dy pos angle distance] (get-drag-values ev)]
+    (let [[dx dy pos angle distance] (get-drag-values)]
       (physics/apply-impulse @physics-engine (:source-id @drag) (* dx physics-scale -0.004) (* dy physics-scale -0.004)))
     (swap! game-state update-in [:entities] dissoc :dragger)
     (reset! drag nil)))
