@@ -268,6 +268,7 @@
   ; ignore all mouse downs
   (js/window.addEventListener "mousedown" (fn [ev] (.preventDefault ev)))
 
+  (.initializeTouchEvents js/React true)
   ; when the mouse is lifted, null out the drag
   (js/window.addEventListener "mouseup" (fn [ev] (drag-end ev) (.preventDefault ev)))
   (js/window.addEventListener "touchend" (fn [ev] (drag-end ev) (.preventDefault ev)))
