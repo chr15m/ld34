@@ -222,6 +222,9 @@
     (reset! physics-engine engine)
     (physics/run engine)))
 
+; make the world move faster
+(set! (.-timeScale (.-timing @physics-engine)) 1.5)
+
 (defn mount-root []
   (reagent/render [home-page] (.getElementById js/document "app")))
 
