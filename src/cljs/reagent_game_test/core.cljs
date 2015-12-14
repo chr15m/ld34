@@ -259,6 +259,7 @@
 
   ; when the mouse is lifted, null out the drag
   (js/window.addEventListener "mouseup" (fn [ev] (drag-end ev) (.preventDefault ev)))
+  (js/window.addEventListener "touchend" (fn [ev] (drag-end ev) (.preventDefault ev)))
 
   ; when the mouse is moved, update the drag
   (js/window.addEventListener "mousemove" (fn [ev] (if @drag (drag-update ev)) (.preventDefault ev)))))
@@ -271,7 +272,13 @@
         height-doubled (* 2 (:scaled-height @viewport-size))]
     (print "creating physics engine")
     ; add the player
-    (physics/add engine.world (clj->js [(make-box -0.2 0.2 0.2 0.2 {:label "Player"} {:symbol "❤" :heart-size 5 :style {:font-size "0.5em"} :color 4 :entity-args {:on-click #(sfx/play :blip) :on-mouse-down drag-start}})]))
+    (physics/add engine.world (clj->js [(make-box -0.2 0.2 0.2 0.2 {:label "Player"} {:symbol "❤"
+                                                                                      :heart-size 5
+                                                                                      :style {:font-size "0.5em"}
+                                                                                      :color 4
+                                                                                      :entity-args {:on-click #(sfx/play :blip)
+                                                                                                    :on-mouse-down drag-start
+                                                                                                    :on-touch-start drag-start}})]))
     (doseq [x (range @hurt-count)]
       (physics/add engine.world (clj->js [(make-box (* (- (rnd) 0.5) width 1.6)  (* (- (rnd) 0.5) height 1.6) 0.2 0.2 {:label "Block" :isStatic true} {:symbol (get bad-things (rnd-int 0 3)) :color (rnd-int 0 2)})])))
     (physics/add engine.world (clj->js [(make-star 0 0)]))
