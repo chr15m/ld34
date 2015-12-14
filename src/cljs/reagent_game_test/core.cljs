@@ -137,7 +137,7 @@
             (swap! delete-physics-entities assoc-in [(str "physics-" (.-id o))] o)
             ; hitting a block grows your heart
             (set! (.-entity b) (-> (.-entity b)
-                                   (update-in [:heart-size] inc)
+                                   (update-in [:heart-size] #(+ % 3))
                                    (assoc-in [:style :font-size] (str (.toFixed (/ (get-in (.-entity b) [:heart-size]) 10) 2) "em")))))))
       (let [sfx-name (str "bump-" (+ (js/Math.round (* (js/Math.random) 2)) 1))]
         (sfx/play (keyword sfx-name))))))
@@ -175,13 +175,13 @@
 
 ; define our initial game entities
 ;(make-entity {:symbol "◎" :color 0 :pos [-0.3 -0.2] :angle 0 :behaviour behaviour-loop :size [0.2 0.2] :entity-args {:on-click play-blip}})
-(make-entity {:symbol "❤" :color 2 :pos [0 0] :angle 0 :class "boss" :size [0.2 0.2]})
-(make-entity {:symbol "☢" :color 0 :pos [-0.2 0.3] :angle 0 :size [0.2 0.2]})
+;(make-entity {:symbol "❤" :color 2 :pos [0 0] :angle 0 :class "boss" :size [0.2 0.2]})
+;(make-entity {:symbol "☢" :color 0 :pos [-0.2 0.3] :angle 0 :size [0.2 0.2]})
 ;(make-entity {:symbol "⬠" :color 0 :pos [-0.35 -0.3] :angle 0 :size [0.2 0.2]})
 ;(make-entity {:symbol "▼" :color 0 :pos [-0.8 0.8] :angle 0 :size [0.2 0.2]})
-(make-entity {:symbol "⚔" :color 0 :pos [1.0 0.75] :angle 0 :size [0.2 0.2]})
-(make-entity {:symbol "☠" :color 1 :pos [1.0 0.2] :angle 0 :size [0.2 0.2]})
-(make-entity {:symbol "⚡" :color 0 :pos [0.5 -0.2] :angle 0 :size [0.2 0.2]})
+;(make-entity {:symbol "⚔" :color 0 :pos [1.0 0.75] :angle 0 :size [0.2 0.2]})
+;(make-entity {:symbol "☠" :color 1 :pos [1.0 0.2] :angle 0 :size [0.2 0.2]})
+;(make-entity {:symbol "⚡" :color 0 :pos [0.5 -0.2] :angle 0 :size [0.2 0.2]})
 
 ;; -------------------------
 ;; Views
@@ -226,8 +226,8 @@
     (print "creating physics engine")
     ; add the player
     (physics/add engine.world (clj->js [(make-box -0.2 0.2 0.2 0.2 {:label "Player"} {:symbol "❤" :heart-size 5 :style {:font-size "0.5em"} :color 1 :entity-args {:on-click #(sfx/play :blip) :on-mouse-down drag-start}})]))
-    (doseq [x (range 10)]
-      (physics/add engine.world (clj->js [(make-box (- (* (rnd) width 1.8) 1.0) (- (* (rnd) height 1.8) 1.0) 0.2 0.2 {:label "Block" :isStatic true} {:symbol (get bad-things (rnd-int 0 3)) :color (rnd-int 0 2)})])))
+    (doseq [x (range 20)]
+      (physics/add engine.world (clj->js [(make-box (* (- (rnd) 0.5) width 1.6)  (* (- (rnd) 0.5) height 1.6) 0.2 0.2 {:label "Block" :isStatic true} {:symbol (get bad-things (rnd-int 0 3)) :color (rnd-int 0 2)})])))
     ; add walls
     (physics/add engine.world (clj->js [(make-box 0 0.95 width-doubled 0.05 {:isStatic true})
                                         (make-box 0 -0.95 width-doubled 0.05 {:isStatic true} {:style {:display "none"}})
