@@ -139,9 +139,11 @@
                       (let [new-hurt-count (- old-hurt-count (count @delete-physics-entities))]
                         ; if we've hit zero the first time, add the goal box
                         (if (and (> old-hurt-count 0) (<= new-hurt-count 0))
-                          (physics/add engine.world (clj->js [(make-box 0 -0.5 0.2 0.2
-                                                                        {:label "Luv" :isStatic true}
-                                                                        {:symbol "❤" :style {:font-size "5.0em"} :color 2})])))
+                          (go
+                            (<! (timeout 1000))
+                            (physics/add engine.world (clj->js [(make-box 0 -0.5 0.2 0.2
+                                                                          {:label "Luv" :isStatic true}
+                                                                          {:symbol "❤" :style {:font-size "5.0em"} :color 2})]))))
                         new-hurt-count)))
   
   ; reset delete list
@@ -160,7 +162,7 @@
             (set! (.-entity b) (-> (.-entity b)
                                    (update-in [:heart-size] #(+ % 3))
                                    (assoc-in [:style :font-size] (str (.toFixed (/ (get-in (.-entity b) [:heart-size]) 10) 2) "em")))))
-          (when (= (.-label o) "Luv")
+          (when (= (.-label o) "Luv")        
             (go-loop []
                      (<! (timeout 20))
                      (swap! won #(js/Math.max (- % 0.01) 0))   
