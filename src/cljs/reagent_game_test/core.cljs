@@ -23,6 +23,8 @@
 (def blurb "ld34.")
 (def physics-scale 1000.0)
 
+(def bad-things ["☢" "⚔" "☠" "⚡"])
+
 (print blurb)
 
 (print "initial game-state: " (map (fn [[id e]] (print id "->" e)) (:entities @game-state)))
@@ -217,17 +219,20 @@
 
 (defonce engine
   (let [engine (physics/make-physics-engine #(engine-updated %) #(engine-collision %))
-        width (* 2 (:scaled-width @viewport-size))
-        height (* 2 (:scaled-height @viewport-size))]
+        width (:scaled-width @viewport-size)
+        height (:scaled-height @viewport-size)
+        width-doubled (* 2 (:scaled-width @viewport-size))
+        height-doubled (* 2 (:scaled-height @viewport-size))]
     (print "creating physics engine")
     ; add the player
     (physics/add engine.world (clj->js [(make-box -0.2 0.2 0.2 0.2 {:label "Player"} {:symbol "❤" :heart-size 5 :style {:font-size "0.5em"} :color 1 :entity-args {:on-click #(sfx/play :blip) :on-mouse-down drag-start}})]))
-    (physics/add engine.world (clj->js [(make-box 0.3 0.5 0.2 0.2 {:label "Block" :isStatic true} {:symbol "☠"})]))
+    (doseq [x (range 10)]
+      (physics/add engine.world (clj->js [(make-box (- (* (rnd) width 1.8) 1.0) (- (* (rnd) height 1.8) 1.0) 0.2 0.2 {:label "Block" :isStatic true} {:symbol (get bad-things (rnd-int 0 3)) :color (rnd-int 0 2)})])))
     ; add walls
-    (physics/add engine.world (clj->js [(make-box 0 0.95 width 0.05 {:isStatic true})
-                                        (make-box 0 -0.95 width 0.05 {:isStatic true})
-                                        (make-box (/ width -2.0) 0 0.05 height {:isStatic true})    
-                                        (make-box (/ width 2.0) 0 0.05 height {:isStatic true})])) 
+    (physics/add engine.world (clj->js [(make-box 0 0.95 width-doubled 0.05 {:isStatic true})
+                                        (make-box 0 -0.95 width-doubled 0.05 {:isStatic true} {:style {:display "none"}})
+                                        (make-box (* width -1.0) 0 0.05 height-doubled {:isStatic true} {:style {:display "none"}})    
+                                        (make-box width 0 0.05 height-doubled {:isStatic true} {:style {:display "none"}})])) 
     (reset! physics-engine engine)
     (physics/run engine)))
 
