@@ -168,15 +168,13 @@
     ; return the entity we created
     entity))
 
-(defn play-blip [ev] (sfx/play :blip))
-
 ; define our initial game entities
-(make-entity {:symbol "◎" :color 0 :pos [-0.3 -0.2] :angle 0 :behaviour behaviour-loop :size [0.2 0.2] :entity-args {:on-click play-blip}})
+;(make-entity {:symbol "◎" :color 0 :pos [-0.3 -0.2] :angle 0 :behaviour behaviour-loop :size [0.2 0.2] :entity-args {:on-click play-blip}})
 (make-entity {:symbol "❤" :color 2 :pos [0 0] :angle 0 :class "boss" :size [0.2 0.2]})
-(make-entity {:symbol "☢" :color 0 :pos [-0.2 0.3] :angle 0 :size [0.2 0.2] :behaviour behaviour-rock :style {:border "1px dashed silver" :border-radius 52}})
-(make-entity {:symbol "⬠" :color 0 :pos [-0.35 -0.3] :angle 0 :size [0.2 0.2]})
-(make-entity {:symbol "▼" :color 0 :pos [-0.8 0.8] :angle 0 :size [0.2 0.2]})
-(make-entity {:symbol "⚔" :color 0 :pos [1.0 0.9] :angle 0 :size [0.2 0.2]})
+(make-entity {:symbol "☢" :color 0 :pos [-0.2 0.3] :angle 0 :size [0.2 0.2]})
+;(make-entity {:symbol "⬠" :color 0 :pos [-0.35 -0.3] :angle 0 :size [0.2 0.2]})
+;(make-entity {:symbol "▼" :color 0 :pos [-0.8 0.8] :angle 0 :size [0.2 0.2]})
+(make-entity {:symbol "⚔" :color 0 :pos [1.0 0.75] :angle 0 :size [0.2 0.2]})
 (make-entity {:symbol "☠" :color 1 :pos [1.0 0.2] :angle 0 :size [0.2 0.2]})
 (make-entity {:symbol "⚡" :color 0 :pos [0.5 -0.2] :angle 0 :size [0.2 0.2]})
 
