@@ -5,6 +5,7 @@
 
 (def rectangle js/Matter.Bodies.rectangle)
 (def add js/Matter.World.add)
+(def remove js/Matter.World.remove)
 
 (defn make-renderer [update-callback]
   (def renderer {:create (fn [options]
