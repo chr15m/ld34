@@ -15,6 +15,7 @@
 
 ; all of the entities that appear in our game
 (def game-state (atom {:entities {}}))
+(defonce delete-physics-entities (atom {}))
 (def drag (atom nil))
 (defonce physics-engine (atom nil))
 (defonce viewport-size (atom {}))
@@ -110,17 +111,27 @@
                             :class "outline"
                             :size [(aget b.renderInfo.originalSize 0) (aget b.renderInfo.originalSize 1)]
                             :pos [(/ (aget b.position "x") physics-scale) (/ (aget b.position "y") physics-scale)]
-                            :angle (/ b.angle (* Math.PI 2))} b.entity))))))
+                            :angle (/ b.angle (* Math.PI 2))} b.entity)))))
+  ; remove physics entities that have been deleted
+  (doseq [[id o] @delete-physics-entities]
+    (swap! game-state update-in [:entities] dissoc id)
+    (physics/remove (.-world @physics-engine) o))
+  ; reset delete list
+  (reset! delete-physics-entities {}))
 
 (defn engine-collision [ev]
   (doseq [p ev.pairs]
     (do
-      (doseq [b [p.bodyA p.bodyB]]
+      (doseq [[b o] [[p.bodyA p.bodyB] [p.bodyB p.bodyA]]]
         (when
           (= (.-label b) "Player")
-          (set! (.-entity b) (-> (.-entity b)
-                                 (update-in [:heart-size] inc)
-                                 (assoc-in [:style :font-size] (str (.toFixed (/ (get-in (.-entity b) [:heart-size]) 10) 2) "em"))))))
+          (when (= (.-label o) "Block")
+            ; add to delete list
+            (swap! delete-physics-entities assoc-in [(str "physics-" (.-id o))] o)
+            ; hitting a block grows your heart
+            (set! (.-entity b) (-> (.-entity b)
+                                   (update-in [:heart-size] inc)
+                                   (assoc-in [:style :font-size] (str (.toFixed (/ (get-in (.-entity b) [:heart-size]) 10) 2) "em")))))))
       (let [sfx-name (str "bump-" (+ (js/Math.round (* (js/Math.random) 2)) 1))]
         (sfx/play (keyword sfx-name))))))
 
