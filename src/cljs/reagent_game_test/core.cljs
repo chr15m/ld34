@@ -90,6 +90,11 @@
       (assoc position-style :width (* ew (/ extent ratio)) :height (* eh (/ extent ratio)))
       position-style)))
 
+
+(defn play-random-sound [sound-type]
+  (let [sfx-name (str sound-type "-" (+ (js/Math.round (* (js/Math.random) 2)) 1))]
+    (sfx/play (keyword sfx-name))))   
+
 (defn behaviour-static [old-state elapsed now]
   old-state)
 
@@ -103,13 +108,37 @@
       (assoc-in [:angle] (Math.cos (/ now 2000)))))
 
 (defn make-box [p1 p2 s1 s2 & [options entity]]
-  (let [extent (:extent @viewport-size)
-        original-pos [p1 p2 s1 s2]
+  (let [original-pos [p1 p2 s1 s2]
         pos (vec (map #(* % physics-scale) original-pos))
         ; pos original-pos
         new-options (clj->js (merge options {:renderInfo {:originalSize [s1 s2]}}))]
     (set! (.-entity new-options) entity)
     (apply physics/rectangle (conj pos new-options))))
+
+(defn make-star [p1 p2 & [options entity]]
+  (play-random-sound "coin")
+  (let [r 0.075
+        original-pos [p1 p2 r]
+        pos (vec (map #(* % physics-scale) original-pos))
+        ; pos original-pos
+        new-options (clj->js (merge options {:renderInfo {:originalSize [(* r 2) (* r 2)] :label "Star"}}))
+        new-entity (merge entity {:symbol "★" :color 2 :style {:font-size "5em"} :class ""})]
+    (set! (.-entity new-options) new-entity)
+    (let [new-star (apply physics/circle (conj pos new-options))]
+      (go (<! (timeout 2000))
+          (swap! game-state update-in [:entities] dissoc (str "physics-" (.-id new-star)))
+          (physics/remove (.-world @physics-engine) new-star))
+      (go (<! (timeout 10))
+          (physics/apply-impulse @physics-engine (str "physics-" (.-id new-star)) (* 2 (- (rnd) 0.5)) (* 2 (- (rnd) 0.75))))
+      new-star)))
+
+(defn make-stars [c x y d]
+  (go-loop [counter c]
+           (print counter)
+           (physics/add (.-world @physics-engine) (clj->js [(make-star x y)]))
+           (<! (timeout d))
+           (when (> counter 0)
+             (recur (- counter 1)))))
 
 (defn engine-updated [engine]
   ; (print "renderer.world")
@@ -145,7 +174,6 @@
                                                                           {:label "Luv" :isStatic true}
                                                                           {:symbol "❤" :style {:font-size "5.0em"} :color 3})]))))
                         new-hurt-count)))
-  
   ; reset delete list
   (reset! delete-physics-entities {}))
 
@@ -156,20 +184,24 @@
         (when
           (= (.-label b) "Player")
           (when (= (.-label o) "Block")
+            (play-random-sound "bump")
+            (make-stars 3 (/ (aget (.-position o) "x") physics-scale) (/ (aget (.-position o) "y") physics-scale) 10)
             ; add to delete list
             (swap! delete-physics-entities assoc-in [(str "physics-" (.-id o))] o)
             ; hitting a block grows your heart
             (set! (.-entity b) (-> (.-entity b)
                                    (update-in [:heart-size] #(+ % 3))
                                    (assoc-in [:style :font-size] (str (.toFixed (/ (get-in (.-entity b) [:heart-size]) 10) 2) "em")))))
-          (when (= (.-label o) "Luv")        
+          (when (= (.-label o) "Luv")
+            (if (= @won 1.0)
+              (make-stars 40 (/ (aget (.-position o) "x") physics-scale) (/ (aget (.-position o) "y") physics-scale) 100))
             (go-loop []
                      (<! (timeout 20))
                      (swap! won #(js/Math.max (- % 0.005) 0))   
                      (if (> @won 0)
-                       (recur))))))
-      (let [sfx-name (str "bump-" (+ (js/Math.round (* (js/Math.random) 2)) 1))]
-        (sfx/play (keyword sfx-name))))))
+                       (recur))))
+          (when (= (.-label o) "Ground")
+            (play-random-sound "bump")))))))
 
 ; insert a single new entity record into the game state and kick off its control loop
 ; entity-definition = :symbol :color :pos :angle :behaviour
@@ -208,7 +240,7 @@
     (if (<= @won 0)
       [:div {:class "info-container"}
         [:div {:class "info c3"} blurb " [ " [:a {:href "http://github.com/chr15m/ld34"} "source code"] " ]"]
-        [:div {:class "info smaller c3"} [:p "don’t think of all the misery"] [:p "but of all the beauty that remains"] [:p "-- anne frank"]]])
+        [:div {:class "info smaller c3"} [:p "it is only with the heart that one can see rightly"] [:p "what is essential is invisible to the eye"] [:p "-- the little prince"]]])
     ; tv scan-line effect
     [:div {:id "overlay"}]])
 
@@ -242,11 +274,12 @@
     (physics/add engine.world (clj->js [(make-box -0.2 0.2 0.2 0.2 {:label "Player"} {:symbol "❤" :heart-size 5 :style {:font-size "0.5em"} :color 4 :entity-args {:on-click #(sfx/play :blip) :on-mouse-down drag-start}})]))
     (doseq [x (range @hurt-count)]
       (physics/add engine.world (clj->js [(make-box (* (- (rnd) 0.5) width 1.6)  (* (- (rnd) 0.5) height 1.6) 0.2 0.2 {:label "Block" :isStatic true} {:symbol (get bad-things (rnd-int 0 3)) :color (rnd-int 0 2)})])))
+    (physics/add engine.world (clj->js [(make-star 0 0)]))
     ; add walls
-    (physics/add engine.world (clj->js [(make-box 0 1.0 width-doubled 0.05 {:isStatic true} {:class "solid"})
-                                        (make-box 0 -0.95 width-doubled 0.05 {:isStatic true} {:style {:display "none"}})
-                                        (make-box (* width -1.0) 0 0.05 height-doubled {:isStatic true} {:style {:display "none"}})    
-                                        (make-box width 0 0.05 height-doubled {:isStatic true} {:style {:display "none"}})])) 
+    (physics/add engine.world (clj->js [(make-box 0 1.0 width-doubled 0.05 {:isStatic true :label "Ground"} {:class "solid"})
+                                        (make-box 0 -0.95 width-doubled 0.05 {:isStatic true :label "Ground"} {:style {:display "none"}})
+                                        (make-box (* width -1.0) 0 0.05 height-doubled {:isStatic true :label "Ground"} {:style {:display "none"}})    
+                                        (make-box width 0 0.05 height-doubled {:isStatic true :label "Ground"} {:style {:display "none"}})])) 
     (reset! physics-engine engine)
     (physics/run engine)))
 
